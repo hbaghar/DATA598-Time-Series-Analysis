@@ -1,0 +1,37 @@
+---
+title: "R Time Series Modeling Cheatsheet"
+output: html_notebook
+---
+
+R Time Series Libraries and some of their key functions
+
+Base R includes:
+ts object type
+stl() for decomposition
+acf()
+
+```{r}
+library(tseries)
+# adf.test()
+# kpss.test()
+```
+
+```{r}
+library(astsa)
+# acf1()
+# acf2()
+# sarima()
+```
+
+```{r}
+library(forecast)
+# auto.arima()
+
+# Another package by our textbook author:
+library(fable)
+# fable works with the tidyverse
+# ARIMA() is a version of auto.arima() in fable
+
+```
+
+
