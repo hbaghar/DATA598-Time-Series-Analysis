@@ -1,0 +1,95 @@
+---
+title: "Week 3 Lab: Part 1"
+output: github_document
+---
+```{r, message=FALSE}
+library(astsa)
+library(forecast)
+library(tseries)
+```
+
+## Read uschange.csv
+```{r}
+us.consump <- read.csv("uschange.csv")
+us.consump.ts <- ts(us.consump$Consumption, frequency = 4, start = c(1970,1))
+plot(us.consump.ts)
+```
+
+## Checking the stationarity assumption
+```{r}
+kpss.test(us.consump.ts)
+```
+Fail to reject H0 - Series is stationary
+
+The series is a day over day percentage change - which means it is already differenced
+
+
+## Plotting the ACF and PACF
+```{r}
+acf2(us.consump.ts)
+```
+
+Graph shows LAG÷4 because we read the data with freq = 4.  
+That means 1 on the x-axis is 1 year or 4 quarters
+
+## Use the ACF and PACF plots to identify what kind of series does this follow?
+
+Remember:
+
+> Characteristics of AR processes:
+>
+> - ACF decays exponentially or is sinusoidal (like a sine wave)
+> - There is a significant spike at lag q in PACF, but none beyond q
+>
+> Characteristics of MA processes:
+>
+> - PACF decays exponentially or is sinusoidal
+> - There is a significant spike at lag q in ACF, but none beyond q
+
+Based on this we guess MA 3
+
+## Building an MA3 model
+```{r}
+cons.ts.ma3 <- sarima(us.consump.ts, p = 0, d = 0, q =3)
+cons.ts.ma3
+```
+
+## What do the plot results mean?
+
+- *Standardized residual plot:* Checking for constant variance assumption
+- *ACF of residuals:* We want the residuals to be non-significant and white noise. So if we find that the ACF of residuals has significant spikes, it means we have missed AR/MA terms
+- *QQ plot:* Checking the normality assumption - useful when we make forecasts because we assume normality
+- *Ljung-Box p-value plot:* Indication of white noise, we want to see all the p-values above the blue line
+
+## Let's try an AR3 model - Instructor's recommendation
+```{r}
+cons.ts.ar3 <- sarima(us.consump.ts, p = 3, d = 0, q = 0)
+cons.ts.ar3
+```
+We see that the AR3 model is a slightly better fit.
+
+## Trying an MA4 model
+
+We saw a spike at lag 4 of the ACF that was very close to the significance level so we can check if an MA4 model is suitable
+```{r}
+cons.ts.ma4 <- sarima(us.consump.ts, p = 0, d = 0, q = 4)
+cons.ts.ma4
+```
+
+We see that it is not a better fit, thereby proving our intuition was right.
+
+## Using auto.arima()
+This is a function that was written by the authors of the book to iterate through many iterations of ARIMA models and pick the best fit. Although this tool is helpful, we should always inspect the results because sometimes the model may add extra parameters for tiny improvements.
+
+```{r}
+auto.arima(us.consump.ts, seasonal = FALSE, trace = TRUE)
+```
+
+**Why are we seeing such large AICc values in auto.arima() compared to sarima?**
+
+A. Because sarima() scales the AICc by series length
+
+Let us re-run auto.arima using stepwise = FALSE. This allows us to iterate over more model options.
+```{r}
+auto.arima(us.consump.ts, seasonal = FALSE, trace = TRUE, stepwise = FALSE)
+```
