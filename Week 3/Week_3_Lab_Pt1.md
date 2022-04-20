@@ -143,8 +143,23 @@ cons.ts.ma3
     spikes, it means we have missed AR/MA terms
 -   *QQ plot:* Checking the normality assumption - useful when we make
     forecasts because we assume normality
--   *Ljung-Box p-value plot:* Indication of white noise, we want to see
-    all the p-values above the blue line
+-   *Ljung-Box p-value plot:* Used to examine residuals from a time
+    series model to test whether auto-correlations are significantly
+    different from 0. Indication of white noise, we want to see all the
+    p-values above the blue line
+
+## What do the console results mean?
+
+-   *ttable:* Coefficient estimates along with hypothesis tests and
+    p-value (interpreted just like in regression models)
+-   *AIC:* Akaike’s Information Criterion. A model fit parameter that
+    helps compare fit of different subsets of models. Lesser is better.
+-   *AICc:* Akaike’s Information Criterion corrected. Adds extra penalty
+    for more parameters. Used more commonly in time series models than
+    AIC.
+-   *BIC:* Closely related to BIC but does not penalize for more
+    parameters
+-   *sigma^2:* Variance of the residual
 
 ## Let’s try an AR3 model - Instructor’s recommendation
 
@@ -297,6 +312,13 @@ right.
 
 This is a function that was written by the authors of the book to
 iterate through many iterations of ARIMA models and pick the best fit.
+
+Algorithm:
+
+-   Select number of differences using KPSS test
+-   Select p (AR terms) and q (MA terms) by minimizing AICc
+-   Use step-wise search to traverse model space
+
 Although this tool is helpful, we should always inspect the results
 because sometimes the model may add extra parameters for tiny
 improvements.
