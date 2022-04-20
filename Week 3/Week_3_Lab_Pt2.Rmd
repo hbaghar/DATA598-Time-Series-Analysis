@@ -1,9 +1,9 @@
 ---
-title: "Week 3 Lab Pt 2"
-output: html_notebook
+title: "Week 3 Lab: Part 2"
+output: github_document
 ---
 
-```{r}
+```{r, message=FALSE}
 library(tseries)
 library(astsa)
 library(forecast)
@@ -11,12 +11,13 @@ library(forecast)
 
 
 ```{r}
-car.df <- read.csv("Week 3/CAR_exports.csv")
+car.df <- read.csv("CAR_exports.csv")
 head(car.df)
 str(car.df)
 ```
 Converting to time series object:
 ```{r}
+# Implement in tidyverse
 car.ts <- ts(car.df, frequency = 1, start = c(1960))
 plot(car.ts)
 ```
