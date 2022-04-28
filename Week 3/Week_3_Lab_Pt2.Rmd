@@ -9,7 +9,7 @@ library(astsa)
 library(forecast)
 ```
 
-
+# Read CAR Exports data
 ```{r}
 car.df <- read.csv("CAR_exports.csv")
 head(car.df)
@@ -17,14 +17,55 @@ str(car.df)
 ```
 Converting to time series object:
 ```{r}
-# Implement in tidyverse
 car.ts <- ts(car.df, frequency = 1, start = c(1960))
 plot(car.ts)
 ```
-Check for stationarity:
+
+# Check for stationarity:
 
 Above plot shows that the series is non-stationary, due to the downward trend. Let's do an extra test to make sure
 ```{r}
 kpss.test(car.ts)
 ```
 We see that the series is non-stationary based on p-value.
+
+# Differencing
+```{r}
+car.diff.ts <- diff(car.ts, lag = 1)
+plot(car.diff.ts)
+```
+
+Let's check for stationarity:
+```{r}
+kpss.test(car.diff.ts)
+```
+Series is stationary!
+
+# Modeling series
+
+```{r}
+acf2(car.diff.ts)
+```
+
+We consider the following models:
+
+- AR2: We see 2 significant spikes in the PACF
+- MA3: We see significant spikes in ACF at lag 1 and 3. Even though 2nd spike is not significant, we should check it out
+
+## AR2 model
+```{r}
+sarima(car.diff.ts, p=2,d=0,q=0)
+```
+
+Observations:
+
+- ACF looks good - no significant spikes
+- Ljung-box looks OK - some values are close to the line
+
+## MA3 model
+
+```{r}
+sarima(car.diff.ts, p=0,d=0,q=3)
+```
+
+Residuals looks much better than AR2
