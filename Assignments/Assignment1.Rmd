@@ -1,0 +1,102 @@
+---
+title: 'DATA 598: Assignment 1'
+author: "Hriday Baghar"
+date: "April 28, 2022"
+output:
+  github_document: default
+mainfont: Helvetica
+monofont: Monaco
+---
+
+```{r, setup, message=FALSE}
+library(fpp3)
+library(astsa)
+library(knitr)
+```
+
+# Model the US GDP series found in the global_economy dataset in package fpp3. See textbook section 9.7 for an example of working with this dataset.
+
+Loading the dataset and extracting the required series.
+```{r}
+global_economy |>
+  filter(Code == "USA") |>
+  select(Country, Year, GDP) |>
+  as_tsibble(index = Year) -> gdp.usa
+
+kable(head(gdp.usa))
+```
+
+## 1. Plot the series [1 point].
+
+```{r}
+autoplot(gdp.usa, GDP)+
+  ggtitle("Plot of US GDP Against Time")+
+  labs(x = "Year")+
+  scale_y_continuous(labels =  scales::dollar_format(suffix = " Trillion", scale = 1/1e12))
+```
+
+## 2. Determine whether the series is stationary; if not, take appropriate action [1 point].
+
+This series is clearly non-stationary, as can be seen with the rising trend. We confirm this using a KPSS test:
+```{r}
+gdp.usa |>
+  features(GDP, unitroot_kpss)
+```
+Since the p-value is < 0.05, we reject the null hypothesis that the data is stationary. 
+
+We need to make this data stationary. We do this by applying a difference operation. Let us use the `unitroot_ndiffs()` function to check how many difference operations are required.
+
+```{r}
+gdp.usa |>
+  features(GDP, unitroot_ndiffs)
+```
+Two differences are required based on this function. Let us check what happens with a first order difference operation:
+```{r}
+gdp.usa  |>
+  autoplot(difference(GDP)) +
+  labs(title = "First order differenced series", x="Year")
+
+gdp.usa |>
+  features(difference(GDP), unitroot_kpss)
+```
+It is clear that a first order difference still has some trend is non-stationary. The KPSS test supports this.
+
+We take a second order difference and inspect it in a similar manner:
+```{r}
+gdp.usa  |>
+  autoplot(difference(GDP, differences = 2)) +
+  labs(title = "Second order differenced series", x="Year")
+
+gdp.usa |>
+  features(difference(GDP, differences = 2), unitroot_kpss)
+```
+Both the plot and the KPSS test support that the series is now stationary.
+
+## 3. Include appropriate ACF and PACF plots and interpret them [1 point].
+
+```{r}
+gdp.usa |>
+  mutate(diff.2 = difference(GDP, differences = 2)) |>
+  gg_tsdisplay(diff.2, plot_type = "partial")
+```
+
+From the ACF and PACF plots we observe:
+
+1. ACF exhibits sinusoidal-like behavior with a significant spike at lag 7
+2. PACF has has a significant spike at lag 6 and none beyond that
+
+Since the decay is sinusoidal in ACF and PACF has a spike at lag 6, an AR6 model looks like a good candidate for this series. We might explore an MA7 model to but we do not see a sinusoidal or exponential decay in the PACF, which is why AR6 seems to be a better choice.
+
+## 4. Use sarima() to fit at least one model for the series [1 point].
+
+```{r}
+sarima(gdp.usa$GDP, p=6,d=2,q=0)
+```
+
+## 5. Comment on the residual plots from sarima() [1 point].
+
+From the `sarima()` plots, we can conclude that the residuals are white noise because:
+
+- The ACF spikes are all non-significant
+- The residuals have constant variance, although the end of the residual plot appears to have some departure from 0
+- P-values from the Ljung-Box plot are all above the significance level, although lag 9 and 10 are somewhat close
