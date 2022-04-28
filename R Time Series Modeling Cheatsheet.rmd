@@ -1,6 +1,8 @@
 ---
 title: "R Time Series Modeling Cheatsheet"
-output: html_notebook
+output: 
+  word_document: default
+  html_document: default
 ---
 
 R Time Series Libraries and some of their key functions
@@ -9,6 +11,7 @@ Base R includes:
 ts object type
 stl() for decomposition
 acf()
+window()
 
 ```{r}
 library(tseries)
@@ -21,11 +24,13 @@ library(astsa)
 # acf1()
 # acf2()
 # sarima()
+# sarima.for()
 ```
 
 ```{r}
 library(forecast)
 # auto.arima()
+# accuracy()
 
 # Another package by our textbook author:
 library(fable)
