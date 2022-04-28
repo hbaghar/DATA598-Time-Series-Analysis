@@ -1,0 +1,84 @@
+---
+title: "Week 4 Lab: Forecasting"
+output: github_document
+---
+
+```{r, setup, message=FALSE}
+library(astsa)
+library(tseries)
+library(forecast)
+```
+
+# US Exchange data
+```{r}
+econ.df <-  read.csv("../Week 3/uschange.csv")
+econ.ts <- ts(data = econ.df$Consumption, start = c(1970,1), frequency = 4)
+```
+
+## Splitting into train and test data
+
+Set test test as last 2 years of data
+```{r}
+train <- window(econ.ts, end = c(2014,3))
+test <- window(econ.ts, start = c(2014,4))
+```
+
+## Forecast 1: Using AR3
+
+```{r}
+econ.for.ar3 <- sarima.for(train, n.ahead = 8, p=3,d=0,q=0)
+lines(test,type='o')
+```
+
+### Checking predictions, standard error and accuracy metrics
+```{r}
+econ.for.ar3$pred
+econ.for.ar3$se
+accuracy(econ.for.ar3$pred, test)
+```
+
+## Forecast 2: MA3
+
+```{r}
+econ.for.ma3 <- sarima.for(train, n.ahead = 8, p=0, d=0, q=3)
+lines(test, type='o')
+```
+
+### Checking predictions, standard error and accuracy metrics
+```{r}
+econ.for.ma3$pred
+econ.for.ma3$se
+accuracy(econ.for.ma3$pred, test)
+```
+
+# CAR Exports Data
+```{r}
+car.df <- read.csv("../Week 3/CAR_exports.csv")
+head(car.df)
+str(car.df)
+```
+
+Converting to time series object:
+```{r}
+car.ts <- ts(car.df, frequency = 1, start = c(1960))
+plot(car.ts)
+```
+
+## Split into train and test set
+```{r}
+train.car <- window(car.ts, end = 2012)
+test.car <- window(car.ts, start= 2012)
+```
+
+## Forecast: AR2
+```{r}
+car.for <- sarima.for(train.car, n.ahead = 5, p=2, d=1, q=0)
+lines(test.car, type='o')
+```
+
+### Checking predictions, standard error and accuracy metrics
+```{r}
+car.for$pred
+car.for$se
+accuracy(car.for$pred, test.car)
+```
