@@ -92,6 +92,30 @@ Since the decay is sinusoidal in ACF and PACF has a spike at lag 6, an AR6 model
 ```{r}
 sarima(gdp.usa$GDP, p=6,d=2,q=0)
 ```
+Let us use `fable` to fit the same model. We can also search for the best model based on the automatic search feature of the `ARIMA()` function.
+```{r}
+gdp.fit <- gdp.usa |>
+  model(arima620 = ARIMA(GDP ~ pdq(6,2,0)),
+        search = ARIMA(GDP))
+
+gdp.fit |>
+  pivot_longer(cols = -Country, names_to = "Model name", values_to = "Model") |>
+  mutate(model.details = format(Model))
+
+glance(gdp.fit) |> arrange(AICc) |> select(.model:BIC)
+```
+Interestingly, `ARIMA()` search finds MA2 to be a better fit.
+
+Let us plot the resiudals from both models:
+```{r}
+gdp.fit |>
+  select(arima620)|>
+  gg_tsresiduals()
+
+gdp.fit |>
+  select(search) |>
+  gg_tsresiduals()
+```
 
 ## 5. Comment on the residual plots from sarima() [1 point].
 
