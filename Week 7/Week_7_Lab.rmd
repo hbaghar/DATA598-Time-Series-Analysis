@@ -1,0 +1,121 @@
+---
+title: "Week 7 Lab Notebook"
+author: "Kellie Wills, Ph.D."
+date: "5/12/2022"
+output: github_document
+---
+
+```{r}
+library(astsa)  # for mvspec()
+library(forecast) # for fourier() and accuracy()
+library(tseries)
+```
+
+
+## Weekly data
+
+```{r}
+
+us_gasoline = read.csv("us_gasoline.csv")
+plot(us_gasoline$Barrels, type = 'l', ylab = "Thousands of barrels")
+
+```
+
+```{r}
+
+us_gas = ts(us_gasoline$Barrels,
+            freq = 365.25/7, 
+            start = 1991 + 6/52.18)
+plot(us_gas, ylab = "Thousands of barrels")
+
+```
+
+
+```{r}
+
+gasspec = mvspec(us_gas, 
+                 detrend = TRUE,
+                 spans = 3)          
+                  
+plot(gasspec, xlim = c(0, 6), xlab = "Frequency")
+
+```
+
+
+# train and test sets
+# test set = 2 years = 104 weeks
+
+```{r}
+
+us_gas_train = us_gas[1:1251]
+us_gas_train = ts(us_gas_train, 
+                  freq = 365.25/7,
+                  start = 1991 + 6/52.18)
+end(us_gas_train)
+us_gas_test = us_gas[1252:1355]  
+us_gas_test = ts(us_gas_test, 
+                 freq = 365.25/7,
+                 start = 2015.071 + 1/52.18)
+  
+```
+
+
+# arima() in base R works well with Fourier seasonality.
+
+```{r}
+
+f6 = fourier(us_gas_train, K = 6)
+
+gas_fourier6_ma1 = arima(us_gas_train,
+                     order = c(0, 1, 1),
+                     xreg = f6)
+gas_fourier6_ma1
+
+```
+
+## K = 12 has minimum AIC for 1 < K < 24.
+
+```{r}
+
+gas_fourier12_ma1 = arima(us_gas_train,
+                     order = c(0, 1, 1),
+                     xreg = fourier(us_gas_train, K = 12))
+gas_fourier12_ma1
+
+```
+
+
+
+## Forecasting
+# We'll use predict() in base R.
+
+```{r}
+
+gas_fourier6_ma1_pred = predict(gas_fourier6_ma1,
+                                newxreg = fourier(us_gas_train, K = 6, h = 104),
+                                n.ahead = 104)
+                         
+plot(us_gas_test)
+lines(gas_fourier6_ma1_pred$pred, col = "red")
+
+```
+
+
+```{r}
+
+gas_fourier12_ma1_pred = predict(gas_fourier12_ma1,
+                                newxreg = fourier(us_gas_train, K = 12, h = 104),
+                                n.ahead = 104)
+                         
+plot(us_gas_test)
+lines(gas_fourier12_ma1_pred$pred, col = "red")
+
+```
+
+
+```{r}
+
+accuracy(gas_fourier6_ma1_pred$pred, us_gas_test)
+accuracy(gas_fourier12_ma1_pred$pred, us_gas_test)
+
+```

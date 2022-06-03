@@ -1,0 +1,144 @@
+---
+title: "Week 8 Lab Notebook"
+author: "Kellie Wills, Ph.D."
+date: "5/19/2022"
+output: github_document
+---
+
+```{r}
+
+library(astsa)
+
+```
+
+
+## Read in data and create time series objects
+
+```{r}
+
+econseries = read.csv("../Week 3/uschange.csv")
+cc = ts(econseries$Consumption, freq = 4, start = c(1970, 1))
+inc = ts(econseries$Income, freq = 4, start = c(1970, 1))
+sav = ts(econseries$Savings, freq = 4, start = c(1970, 1))
+
+```
+
+These are stationary series (% changes, so already differenced).
+
+## Part 1. Regression of consumption on income
+```{r}
+
+plot(inc, ylab = "% change", ylim=c(-4, 4), main = "Income")
+
+```
+
+```{r}
+
+plot(cc, ylab = "% change", ylim=c(-4, 4), main = "Consumption")
+
+```
+
+```{r}
+
+plot(inc, cc, xlab = "% change income", ylab = "% change consumption")
+
+```
+
+
+```{r}
+
+ccreg_wrong = lm(cc ~ inc)
+summary(ccreg_wrong)
+
+```
+
+```{r}
+
+plot(ccreg_wrong)
+
+```
+
+The usual residual plots look fine, BUT...
+
+```{r}
+
+acf2(ccreg_wrong$residuals)
+
+```
+
+What ARMA model to try for the errors? 
+
+```{r}
+reg_arma <- sarima(cc, 3,0,0, xreg = inc)
+reg_arma
+```
+
+
+## Part 2. Regression of savings on income
+
+```{r}
+
+plot(inc, sav, xlab = "% change income", ylab = "% change savings")
+
+```
+
+Ordinary regression:
+```{r}
+incsav <- lm(sav ~ inc)
+summary(incsav)
+```
+
+ACF/PACF residuals:
+```{r}
+
+
+```
+
+
+## Part 3. Cross-correlation and lagged predictor
+
+```{r}
+
+ccf(x = inc, y = sav)
+
+```
+
+```{r}
+
+lag2.plot(inc, sav, max.lag = 1, corr = TRUE)
+
+```
+ 
+# Make the time spans match up
+```{r}
+
+alldata = ts.intersect( inc, inclag1 = lag(inc,-1), sav )
+
+```
+
+# Ordinary regression
+```{r}
+
+sav_inclag_lm = lm(sav ~ inc + inclag1, data = alldata)
+summary(sav_inclag_lm)
+
+```
+
+```{r}
+
+acf2(sav_inclag_lm$residuals)
+
+```
+
+
+# What about consumption?
+
+```{r}
+
+ccf(x = inc, y = cc)
+
+```
+
+
+
+
